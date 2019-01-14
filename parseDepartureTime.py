@@ -26,6 +26,7 @@ def takeAndSavePhoto():
 
 def parse_xml(url, verbose=False):
     response = requests.get(url)
+    response.raise_for_status()
 
     logging.debug('get url: '+ url)
     # tree = ElementTree.fromstring(content)
@@ -89,7 +90,7 @@ def parse_xml(url, verbose=False):
             print(departure, platform)
             print(delay)
             print(routeText)
-        if int(realtime) == 1 and int(linie) <= 16 or linie.startswith('N') or linie == 'E':
+        if linie.startswith('N') or linie == 'E' or int(realtime) == 1 and int(linie) <= 16:
             arr =(key, linie, direction, int(departure), typ, routeText)
             dmMonitor.append(arr)
 
@@ -124,13 +125,20 @@ def get_haltepunkt(name='Hauptbahnhof'):
         return None
 
 # TODO retry when failed to get sessionID
+# catch request errors?
 def get_sessionID(name='Hauptbahnhof'):
     haltepunkt = get_haltepunkt(name)
+    if not haltepunkt:
+        print('Unknown stop name %s' % name)
+        return
+
     receivedID = False
 
 
     while not receivedID:
         response = requests.get('https://www.ding.eu/ding3/XSLT_DM_REQUEST?sessionID=0&type_dm=stopID&name_dm='+haltepunkt+'&useRealtime=1&excludedMeans=0&excludedMeans=6&excludedMeans=10&outputFormat=XML')
+        response.raise_for_status()
+
         try:
             tree = etree.fromstring(response.content)
             receivedID = True
@@ -199,7 +207,7 @@ def getETA(stop_name='Saarlandstraße', richtung='Science Park II'):
     return df.iloc[0][['abfahrt','ID']].to_dict()
 
 
-def checkStationTrain(id, name):
+def checkStationTrain(name, id):
     stats = getETA(name)
     if not stats:
         print('%s: no ETA while checking for ID %s' % (name, id))
