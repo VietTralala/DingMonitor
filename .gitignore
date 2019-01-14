@@ -1,0 +1,6 @@
+# pycharm
+.idea
+
+# debug
+*.log
+*.xml

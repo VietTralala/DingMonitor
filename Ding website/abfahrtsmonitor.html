@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head id="head">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Die 3 Meta-Tags oben *müssen* zuerst im head stehen; jeglicher sonstiger head-Inhalt muss *nach* diesen Tags kommen -->
+    <meta name="description" content="SWU Geografische Echtzeitauskunft">
+    <meta name="author" content="Sebastian Mintzlaff">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <title>SWU Echtzeitauskunft</title>
+
+    <!-- Bootstrap-CSS -->
+    <link href="/css/bootstrap.css" rel="stylesheet">
+
+    <!-- Besondere Stile für diese Vorlage -->
+    <link href="/css/swu.css" rel="stylesheet" type="text/css">
+    <link href="/css/blinking.css" rel="stylesheet" type="text/css">
+    <link href="/css/safari.css" rel="stylesheet" type="text/safari">
+
+    <!-- Unterstützung für Media Queries und HTML5-Elemente in IE8 über HTML5 shim und Respond.js -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body onload="allStopsSelect()">
+
+    <!-- Fixierte Navbar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header pull-left">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Navigation ein-/ausblenden</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button> 
+        </div>
+		<a href="//echtzeit.swu.de"><span class="logoname">Echtzeitauskunft</span></a>
+        <a class="stoerungs_logo" id="stoerungsinfo" href="#" data-toggle="modal" data-target="#stoerungsinfoModal"></a> 
+        <a class="pull-right" href="//www.swu.de/privatkunden/produkte-leistungen/mobilitaet/"><img src="/theme/SWU.png" class="swu_logo" alt="SWU Logo"></a> 
+      </div>
+      <div class="container-fluid">
+      <div id="navbar" class="navbar-collapse collapse collapse-blue">
+          <ul class="nav navbar-nav">
+            <li><a href="//echtzeit.swu.de">Echtzeitauskunft</a></li>
+            <li id="handyticket"><a href="https://www.handyticket.de/portals/web/x/swu/login.html">DING Handyticket</a></li>
+            <li><a href="#" data-toggle="modal" data-target="#feedbackModal">Feedback</a></li>
+            <li><a href="#" data-toggle="modal" data-target="#impressumModal">Impressum</a></li>
+          </ul>            
+        </div><!--/.nav-collapse -->
+		</div>
+    </nav>
+
+    <div class="container-fluid abfahrtsmonitor">
+    	<div class="row">
+    		<div class="col-lg-12">
+				<div class="form-group">
+      				<input type="text" id="Haltestelle" class="form-control" name="Haltestelle" list="Haltestellenliste" placeholder="Haltestellenname oder Nummer eingeben">
+    				<datalist id="Haltestellenliste">
+    				<select id="Haltestellenliste_Safari" onChange="$('#HaltestellenlisteSelect').val(this.value)">
+    					<optgroup id="HaltestellenlisteSelect">
+						</optgroup>
+					</select>
+					</datalist>
+    			</div><!-- /form-group -->
+			</div>
+		</div>
+		<div class="row">
+    		<div class="col-lg-12">
+				<nav class="navbar navbar-default navbar-bottom">
+					<div class="container-fluid">
+						<ul class="nav nav-pills nav-justified">
+							<li id="Button_Haltestelle" role="presentation"><a href="#" id="anzeigen">anzeigen</a></li>
+						</ul>
+					</div>
+				</nav>
+			</div>
+		</div>
+ 		<div class="row">
+    		<div class="col-lg-12">
+				<div class="table-responsive">
+					<table class="table table-striped" id="abfahrtsmonitorTable">
+						<thead id="abfahrtsmonitorTableHead">
+							<tr>
+								<th id="dm_name" colspan="3"></th>
+							</tr>
+							<tr id="colhead">
+							</tr>
+						</thead>
+						<tbody id="abfahrtsmonitorTableBody">
+							<tr>
+                				<td colspan="3">
+                					
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+    </div> <!-- /container -->
+
+    <footer class="footer">
+    	<nav class="navbar navbar-default navbar-fixed-bottom">
+			<div class="container-fluid">
+				<ul class="nav nav-pills nav-justified">
+					<li role="presentation"><a href="#" data-toggle="modal" data-target="#hilfeModal">Hilfe</a></li>
+					<li role="presentation" class="dropdown">
+    					<a id="showTimer" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">...</a>
+							<ul class="dropdown-menu">
+							<li><a href="#" onClick="stopTimer();" >...</a></li>
+							<li><a href="#" onClick="setTimer(10);">10s</a></li>
+							<li><a href="#" onClick="setTimer(20);">20s</a></li>
+							<li><a href="#" onClick="setTimer(30);">30s</a></li>  
+							<li><a href="#" onClick="setTimer(60);">60s</a></li> 
+							</ul>
+  					</li>
+					<li role="presentation"><a href="#" data-toggle="modal" data-target="#datenschutzModal">Datenschutz</a></li>
+				</ul>
+			</div>
+		</nav>
+	  </footer> 
+   
+    <div class="modal fade" id="datenschutzModal" tabindex="-1" role="dialog" aria-labelledby="datenschutzModal">
+  		<div class="modal-dialog" role="document">
+    		<div class="modal-content">
+      			<div class="modal-header">
+       				<button type="button" class="close" data-dismiss="modal" aria-label="Schließen"><span aria-hidden="true">&times;</span></button>
+        			<h3 class="modal-title" id="datenschutzModalTitel">Datenschutzerklärung</h3>
+      			</div>
+      			<div class="modal-body">
+						<p>Wir, die SWU Verkehr GmbH freuen uns über Ihren Besuch auf unserer Webseite und über Ihr Interesse an unserem Unternehmen. 
+						Wir wissen, dass Ihnen der sorgfältige Umgang mit Ihren persönlichen Informationen wichtig ist. Selbstverständlich 
+						beachten wir die gesetzlichen Bestimmungen zum Datenschutz, insbesondere der Datenschutz-Grundverordnung (DS-GVO), 
+						des Bundesdatenschutzgesetzes (BDSG) sowie des Telemediengesetzes (TMG).</p>
+						<p>Nachfolgend möchten wir Sie über die Verarbeitung Ihrer personenbezogenen Daten bei Nutzung unserer Webseite sowie über 
+						Ihre Rechte informieren. Personenbezogene Daten sind alle Daten, die auf Sie persönlich beziehbar sind, z. B. 
+						Name, Adresse, E-Mail-Adresse und Nutzerverhalten. Für die sichere Übertragung Ihrer Daten setzen wir den 
+						internationalen Sicherheitsstandard zur Verschlüsselung ein, den Sie an der Transportverschlüsselung https://... 
+						(Hypertext Transfer Protocol Secure) oder an dem Schlosssymbol in der Browserleiste erkennen können.</p>
+					<h4>1. Wer ist für die Verarbeitung meiner personenbezogenen Daten verantwortlich und an wen kann ich mich bei Fragen wenden?</h4>
+						<p>SWU Verkehr GmbH, Karlstraße 1-3, 89073 Ulm, Telefonnummer: 0731 166-0, E-Mail-Adresse: <a href="mailto:info@swu.de">info@swu.de</a>, 
+						Fax-Nummer: 0731 166-4900, Social Media Präsenz: https://www.facebook.com/SWUVerkehr.</p>
+						<p>Unser Datenschutzbeauftragter steht Ihnen für Fragen zur Verarbeitung Ihrer personenbezogenen Daten unter Karlstraße 1-3, 89073 Ulm, 
+							Tel.: 0731 166-2420, Fax: 0731 166-2409, E-Mail: <a href="mailto:datenschutz@swu.de">datenschutz@swu.de</a> gerne zur Verfügung.</p>
+					<h4>2. Welche Arten von personenbezogenen Daten werden von mir verarbeitet? Zu welchen Zwecken und auf welcher 
+					Rechtsgrundlage erfolgt die Verarbeitung?</h4>
+						<p>Die auf dieser Webseite angebotenen Inhalte stehen Ihnen bei informatorischer Nutzung grundsätzlich ohne 
+      					Registrierung zur Verfügung. Personenbezogene Daten werden nur verarbeitet, soweit ein gesetzlicher Erlaubnistatbestand 
+      					gegeben ist oder uns Ihre Einwilligung vorliegt. Eine erteilte Einwilligung kann jederzeit von Ihnen, uns oder dem 
+      					Datenschutzbeauftragten gegenüber widerrufen werden (Kontaktdaten unter 1.). Der Widerruf lässt die Rechtmäßigkeit der 
+      					aufgrund der Einwilligung bis zum Zeitpunkt des Widerrufs erfolgten Verarbeitung Ihrer personenbezogenen Daten unberührt.</p> 
+					<h4>2.1	Verarbeitung personenbezogener Daten bei Besuch unserer Webseite</h4>
+					<h4>2.1.1 Automatische Informationen</h4>
+      					<p>Wenn Sie unsere Webseite aufrufen, werden durch den Webserver automatisch Informationen erhoben und gespeichert. 
+      					Dies geschieht anonym und getrennt von Ihren weiteren Daten. Die automatischen Informationen werden zu 
+      					statistischen Zwecken ausgewertet, um unsere Webseite und unser Angebot optimieren zu können, 
+      					sowie für statistische Zwecke gespeichert. Unter solche automatischen Informationen fallen vor allem:
+      					<ul>
+							<li>Domain-Name oder IP-Adresse,</li>
+							<li>Datum und Uhrzeit der Serveranfrage,</li>
+							<li>Dateinamen und URL/Adresse, auf die Sie zugegriffen haben,</li>
+							<li>Zugriffsstatus/http-Statuscode,</li>
+							<li>übertragene Datenmenge,</li>
+							<li>Referrer URL (die zuvor besuchte Webseite),</li>
+							<li>Browser,</li>
+							<li>Betriebssystem und dessen Oberfläche sowie</li> 
+							<li>Sprache und Version der Browsersoftware</li>
+						</ul>
+						Rechtsgrundlage hierfür ist Art. 6 Abs. 1 Buchst. f DS-GVO.</p>
+					<h4>2.1.2 Cookies</h4>
+						<p>Bei Nutzung unserer Webseite werden Cookies auf Ihrem Rechner gespeichert. Bei Cookies handelt es sich um kleine Textdateien, 
+						die dem von Ihnen verwendeten Browser zugeordnet, und auf Ihrer Festplatte gespeichert werden, um Ihnen unser Internetangebot so 
+						individuell und effektiv wie möglich zur Verfügung stellen zu können. Hierdurch fließen uns bestimmte Informationen zu, z. B. 
+						Ihre bevorzugte Spracheinstellung auf unserer Webseite. Sie können Ihre Browser-Einstellungen entsprechend Ihren Wünschen 
+						konfigurieren und die Annahme von Cookies ablehnen. Informationen hierzu finden Sie in der Hilfefunktion Ihres Browsers. 
+						Wir weisen Sie darauf hin, dass dies eventuell dazu führen kann, dass Sie nicht alle Funktionen dieser Webseite nutzen können.</p>
+						<p>	Rechtsgrundlage für die Speicherung von Cookies ist Art. 6 Abs. 1 Buchst. f DS-GVO, da die Optimierung unseres Internetauftritts 
+						ein berechtigtes Interesse darstellt.</p>
+						<p>Diese Website nutzt folgende Arten von Cookies:</p>
+						<p>Transiente Cookies</p>
+						<p>Hierbei handelt es sich um Cookies, die es Ihnen erlauben, sich schnell, einfach und effizient durch mehrere Seiten zu bewegen, 
+						ohne sich jedes Mal neu authentifizieren zu müssen. Dazu gehören insbesondere die Session-Cookies. Diese speichern eine 
+						sogenannte Session-ID, mit welcher sich verschiedene Anfragen Ihres Browsers der gemeinsamen Sitzung zuordnen lassen. 
+						Dadurch kann Ihr Rechner wiedererkannt werden, wenn Sie auf unsere Webseite zurückkehren. Transiente Cookies werden 
+						automatisch gelöscht, sobald Sie den Browser schließen.</p>
+					<h4>2.2	Verarbeitung personenbezogener Daten bei Kontaktaufnahme</h4>
+						<p>Wir verarbeiten Informationen, die Sie auf unserer Website eingeben oder uns in anderer Weise übermitteln, 
+						um im Anschluss an eine entsprechende Anfrage, Ihrer Beratung und Betreuung nachkommen zu können. Hierunter fallen z. B. 
+						Daten, die Sie in einem Kontaktformular ausfüllen oder uns in einer E-Mail zusenden. </p>
+						<p>Rechtsgrundlage der Verarbeitung Ihrer personenbezogenen Daten ist Art. 6 Abs. 1 Buchst. a DS-GVO. Bei Übermittlung 
+						der Daten willigen Sie in die Datenverwendung für die in der Einwilligung bestimmten Zwecke ein. Wenn Sie die Datenverarbeitung 
+						nicht mehr wünschen, können Sie Ihre Einwilligung jederzeit widerrufen (Kontaktdaten unter 1.). Der Widerruf lässt die Rechtmäßigkeit 
+						der aufgrund der Einwilligung bis zum Zeitpunkt des Widerrufs erfolgten Verarbeitung Ihrer personenbezogenen Daten unberührt.</p>
+					<h4>3. Erfolgt eine Offenlegung meiner personenbezogenen Daten gegenüber anderen Empfängern oder eine Übermittlung an oder in Drittländer?</h4>
+						<p>Eine Offenlegung bzw. Übermittlung Ihrer personenbezogenen Daten erfolgt ausschließlich im Rahmen der unter 2. genannten 
+						Zwecke gegenüber folgendem Empfänger: </p>
+						<p>SWU TeleNet GmbH</p>
+						<p>Der von uns beauftragte Auftragsverarbeiter im Sinne von Art. 28 DS-GVO verarbeitet die uns von Ihnen übermittelten 
+						personenbezogenen Daten ausschließlich in unserem Auftrag und nach Maßgabe des hierfür abgeschlossenen Vertrages. 
+						Die an diesen Dritten übermittelten Daten werden von ihm ausschließlich zur Durchführung oder Abwicklung Ihres Auftrages 
+						oder Ihrer Anfrage entsprechend der diesem Dritten obliegenden Verpflichtungen oder Aufgaben verwendet. Wir geben Ihre 
+						personenbezogenen Daten darüber hinaus an Dritte nur weiter, sofern dies notwendig ist, um unsere rechtlichen Verpflichtungen 
+						zu erfüllen.</p>
+						<p>Eine Übermittlung Ihrer personenbezogenen Daten an oder in Drittländer oder an internationale Organisationen erfolgt nicht.</p>
+					<h4>4. Für welche Dauer werden meine personenbezogenen Daten gespeichert?</h4>
+						<p>Ihre personenbezogenen Daten, die wir aufgrund eines gesetzlichen Erlaubnistatbestandes oder aufgrund Ihrer 
+						Einwilligung verarbeiten, werden grundsätzlich nur so lange gespeichert, wie dies für die unter 2. festgelegten Zwecke, 
+						also beispielsweise für die Beantwortung Ihrer Anfrage oder die Erfüllung eines Vertragsverhältnisses, erforderlich 
+						ist oder alternativ bis zu dem Zeitpunkt, in dem die zuvor erteilte Einwilligung in die Verarbeitung Ihrer personenbezogenen 
+						Daten von Ihnen widerrufen wird.</p>
+						<p>Sind Sie Kunde bei uns, kann sich aus zwingenden gesetzlichen Anforderungen, insbesondere Archivierungspflichten, 
+						eine über das jeweilige Vertragsverhältnis und die Vertragsabwicklung hinausgehende Aufbewahrungspflicht für Daten ergeben. 
+						So sind wir aufgrund bestehender handels- und steuerrechtlicher Vorgaben verpflichtet, Ihre Adresse sowie Ihre Zahlungs- und 
+						Bestelldaten für die Dauer von zehn Jahren aufzubewahren beziehungsweise zu speichern. In diesen Fällen werden wir 
+						Ihre personenbezogenen Daten jedoch sperren, sodass sie nur noch zu Archivierungszwecken verwendet werden können. 
+						Nach Ablauf der Aufbewahrungsfrist werden die Daten gelöscht.</p>
+					<h4>5. Welche Rechte habe ich in Bezug auf die Weiterleitung meiner personenbezogenen Daten?</h4>
+    					<p>Hinsichtlich der Sie betreffenden personenbezogenen Daten haben Sie uns gegenüber folgende Rechte:
+    						<ul>
+								<li>Recht auf Auskunft über Ihre gespeicherten personenbezogenen Daten (Art. 15 DS-GVO),</li>
+								<li>Recht auf Berichtigung, wenn die Sie betreffenden gespeicherten Daten fehlerhaft, veraltet oder sonst wie unrichtig sind (Art. 16 DS-GVO),</li>
+								<li>Recht auf Löschung, wenn die Speicherung unzulässig ist, der Zweck der Verarbeitung erfüllt und die Speicherung daher nicht mehr erforderlich ist oder Sie eine erteilte Einwilligung zur Verarbeitung bestimmter personenbezogener Daten widerrufen haben (Art. 17 DS-GVO),</li>
+								<li>Recht auf Einschränkung der Verarbeitung, wenn eine der in Art. 18 Abs. 1 Buchst. a bis d DS-GVO genannten Voraussetzungen gegeben ist (Art. 18 DS-GVO),</li>
+								<li>Recht auf Übertragung der von Ihnen bereitgestellten, Sie betreffenden personenbezogenen Daten (Art. 20 DS-GVO),</li>
+								<li>Recht auf Widerruf einer erteilten Einwilligung, wobei der Widerruf die Rechtmäßigkeit der bis dahin aufgrund der Einwilligung erfolgten Verarbeitung nicht berührt (Art. 7 Abs. 3 Buchst. c DS-GVO) und</li>
+								<li>Recht auf Beschwerde bei einer Aufsichtsbehörde (Art. 77 DS-GVO).</li>
+							</ul>
+						</p>
+					<h4>6. Widerspruchsrecht</h4>
+						<p><b>Sie können jederzeit der Verarbeitung Ihrer personenbezogenen Daten für Zwecke die wir auf ein berechtigtes Interesse i. S. d. 
+						Art. 6 Abs. 1 Buchst. f DS-GVO stützen, uns gegenüber aus Gründen, die sich aus Ihrer besonderen Situation ergeben, unter Angabe 
+						dieser Gründe widersprechen. Wir werden die personenbezogenen Daten im Falle eines begründeten Widerspruchs grundsätzlich nicht mehr 
+						für die betreffenden Zwecke verarbeiten und die Daten löschen, es sei denn, wir können zwingende Gründe für die Verarbeitung 
+						nachweisen, die Ihre Interessen, Rechte und Freiheiten überwiegen, oder die Verarbeitung dient der Geltendmachung, Ausübung oder 
+						Verteidigung von Rechtsansprüchen.</b></p>
+						<p><b>Der Widerspruch ist an SWU Verkehr GmbH, Karlstraße 1-3, 89073 Ulm, Telefonnummer: 0731 166-0, E-Mail-Adresse: 
+						<a href="mailto:info@swu.de">info@swu.de</a>, Fax-Nummer: 0731 166-4900 zu richten.</b></p>
+      			</div>
+    		</div>
+  		</div>
+	</div> <!-- Modal Datenschutz -->
+    
+    <div class="modal fade" id="impressumModal" tabindex="-1" role="dialog" aria-labelledby="impressumModal">
+  		<div class="modal-dialog" role="document">
+    		<div class="modal-content">
+      			<div class="modal-header">
+       				<button type="button" class="close" data-dismiss="modal" aria-label="Schließen"><span aria-hidden="true">&times;</span></button>
+        			<h3 class="modal-title" id="impressumModalTitel">Impressum, Anbieterkennzeichnung, Nutzungsbedingungen und Datenschutzerklärung</h3>
+      			</div>
+      			<div class="modal-body">
+					<h4>Impressum SWU Verkehr GmbH</h4>
+						<p>Karlstraße 1-3, 89073 Ulm</p>
+						<p>Telefon: 0731 166-2120<br>
+						E-Mail: <a href="mailto:info@swu.de">info@swu.de</a></p>
+						<p>Geschäftsführer: André Dillmann</p>
+						<p>Registergericht: Amtsgericht<br>
+						Handelsregisternummer: Ulm HRB 3863<br>
+						Ust. Id. Nummer: DE 812774619</p>
+						<br>
+					<h4>Konzeption, Gestaltung und Realisierung</h4>
+						<p>Sebastian Mintzlaff<br>
+					   	Staufenring 1, 89073 Ulm</p>
+						<p>E-Mail: info@tamm-webdesign.de</p>
+					<br>
+					<h3>Nutzungsbedingungen</h3>
+					<h4>Haftungsausschluss</h4>
+					<p>Die in diesem Internetangebot enthaltenen Angaben und Informationen wurden von dem Betreiber dieser Internetpräsenz sorgfältig 
+					recherchiert und geprüft. Der Betreiber übernimmt jedoch für die Aktualität, Korrektheit, Vollständigkeit oder Qualität der 
+					bereitgestellten Informationen keine Haftung, Garantie oder Gewähr. Haftungsansprüche gegen den Betreiber, die sich auf Schäden 
+					materieller oder ideeller Art beziehen, welche durch die Nutzung oder Nichtnutzung der dargebotenen Informationen bzw. durch die Nutzung 
+					fehlerhafter und unvollständiger Informationen verursacht wurden, sind grundsätzlich ausgeschlossen. Alle Angebote sind freibleibend 
+					und unverbindlich. Der Betreiber behält es sich ausdrücklich vor, Teile der Seiten oder das gesamte Angebot ohne gesonderte Ankündigung 
+					zu verändern, zu löschen oder die Veröffentlichung zeitweise oder endgültig einzustellen.
+					Dieser Haftungsausschluss ist als Teil des Internetangebotes zu betrachten, von dem aus auf diese Seite verwiesen wurde. 
+					Sofern Teile oder einzelne Formulierungen dieses Textes der geltenden Rechtslage nicht, nicht mehr oder nicht vollständig entsprechen 
+					sollten, bleiben die übrigen Teile des Dokumentes in ihrem Inhalt und ihrer Gültigkeit hiervon unberührt.</p>
+					<h4>Verweise und Links</h4>
+					<p>Bei direkten oder indirekten Links auf fremde Internetseiten, die außerhalb des Verantwortungsbereiches des Betreibers liegen, 
+					haftet dieser nur dann, wenn er von den Inhalten Kenntnis hat und es ihm technisch möglich und zumutbar wäre, die Nutzung im Falle 
+					rechtswidriger Inhalte zu verhindern. Der Betreiber erklärt daher ausdrücklich, dass zum Zeitpunkt der Linksetzung die entsprechenden 
+					verlinkten Seiten frei von illegalen Inhalten waren. Der Betreiber hat keinerlei Einfluss auf die aktuelle und zukünftige Gestaltung 
+					und die Inhalte der gelinkten Seiten. Deshalb distanziert er sich hiermit ausdrücklich von allen Inhalten aller gelinkten Seiten 
+					inklusive aller Unterseiten und macht sich ihre Inhalte nicht zu eigen. Diese Erklärung gilt für alle innerhalb des eigenen 
+					Internetangebotes angebrachten Links. Für illegale, fehlerhafte oder unvollständige Inhalte und insbesondere für Schäden, die aus der 
+					Nutzung oder Nichtnutzung solcher dargebotener Informationen entstehen, haftet allein der Anbieter der Seite, auf welche verwiesen wurde, 
+					nicht derjenige, der über Links auf die jeweilige Veröffentlichung lediglich verweist. Diese Erklärung gilt auch für Fremdeinträge in 
+					vom Betreiber eingerichteten Gästebüchern, Diskussionsforen und Mailinglisten.</p>
+					<h4>Urheberrecht</h4>
+					<p>Der Betreiber ist bestrebt, in allen Publikationen die Urheberrechte der verwendeten Grafiken, Tondokumente, Videosequenzen und Texte 
+					zu beachten, von ihm selbst erstellte Grafiken, Tondokumente, Videosequenzen und Texte zu nutzen oder auf lizenzfreie Grafiken, 
+					Tondokumente, Videosequenzen und Texte zurückzugreifen. Die hier veröffentlichten Texte, Grafiken, Bilder und andere Seiten stammen, 
+					soweit nicht anders gekennzeichnet, aus seiner Sammlung. Alle innerhalb des Internetangebotes genannten und ggf. durch Dritte geschützten 
+					Marken- und Warenzeichen unterliegen uneingeschränkt den Bestimmungen des jeweils gültigen Kennzeichenrechts und den Besitzrechten der 
+					jeweiligen eingetragenen Eigentümer. Allein aufgrund der bloßen Nennung ist nicht der Schluss zu ziehen, dass Markenzeichen nicht durch 
+					Rechte Dritter geschützt sind. Das Copyright für veröffentlichte, vom Betreiber selbst erstellte Objekte bleibt allein beim Betreiber 
+					der Seiten. Eine Vervielfältigung oder Verwendung solcher Grafiken, Tondokumente, Videosequenzen und Texte in anderen elektronischen 
+					oder gedruckten Publikationen ist ohne ausdrückliche Zustimmung des Betreibers nicht gestattet.</p>
+					<h4>Gewinnspiele</h4>
+					<p>Der Betreiber bietet in unregelmäßigen Abständen Aktionen und Gewinnspiele auf den Webseiten der SWU an. Details zu Aktionen und 
+					Gewinnspielen sowie Gewinnmöglichkeiten werden jeweils rechtzeitig auf den Webseiten der SWU bekannt gegeben. Gewinner werden per E-Mail 
+					benachrichtigt. Eine Barauszahlung von Gewinnen ist nicht möglich. Der Rechtsweg ist ausgeschlossen. Im Rahmen von Gewinnspielen können 
+					weitere Daten erhoben und gespeichert werden, die zur Abwicklung des jeweiligen Gewinnspiels und zur Ermittlung von Gewinnern notwendig ist. 
+					Führen ein Verstoß gegen die Nutzungsbedingungen oder andere manipulative Eingriffe eines Benutzers zum Erwerb eines Gewinns, kann der 
+					Gewinn seitens SWU auch nachträglich wieder aberkannt werden. Wurde der Gewinn bereits ausgehändigt, ist der Gewinner zur Rückgabe 
+					im übergebenen Zustand verpflichtet.<br>
+					SWU behält sich außerdem vor, auch bereits angekündigte oder laufende Aktionen, Gewinne und Inhalte auch kurzfristig noch zu ändern. 
+					In solchen Fällen erfolgt eine entsprechende Information an die Benutzer.</p>
+					<h4>Europäische Online-Streitbeilegungs-Plattform</h4>
+					<p>Verbraucher haben die Möglichkeit über die Online-Streitbeilegungs-Plattform (OS-Plattform) der europäischen Union kostenlose 
+					Hilfestellung für die Einreichung einer Verbraucherbeschwerde zu einem Online-Kaufvertrag oder Online-Dienstleistungsvertrag sowie 
+					Informationen über die Verfahren an den Verbraucherschlichtungsstellen in der europäischen Union zu erhalten. Die OS-Plattform kann unter 
+					folgendem Link aufgerufen werden: <a href="http://ec.europa.eu/consumers/odr/" target="_blank">http://ec.europa.eu/consumers/odr/</a></p>
+					<p>Unsere E-Mail-Adresse ist: <a href="mailto:verbraucherbeschwerde@swu.de">verbraucherbeschwerde@swu.de</a></p>
+					<h4>Datenschutz</h4>
+					<p>Beachten Sie in diesem Zusammenhang bitte auch unsere 
+     				<a id="datenschutzlink" href="#" data-toggle="modal" data-target="#datenschutzModal">Datenschutzbestimmungen.</a></p>
+      			</div>
+    		</div>
+  		</div>
+	</div> <!-- Modal Impressum -->
+    
+    <div class="modal fade" id="feedbackModal" tabindex="-1" role="dialog" aria-labelledby="feedbackModal">
+  		<div class="modal-dialog" role="document">
+    		<div class="modal-content">
+      			<div class="modal-header">
+       				<button type="button" class="close" data-dismiss="modal" aria-label="Schließen"><span aria-hidden="true">&times;</span></button>
+        			<h3 class="modal-title" id="feedbackModalTitel">Feedback</h3>
+      			</div>
+      			<div class="modal-body">
+					<div class="form-group">
+    					<label for="Thema" id="l_thema">Bitte wählen Sie ein Thema</label>
+ 						<select name="thema" id="thema" class="form-control" >    				
+							<option value="" placeholder></option>
+							<option value="Frage">Frage</option>
+							<option value="Lob/Kritik">Lob / Kritik</option>
+							<option value="technisches Problem">technisches Problem</option>
+							<option value="Verbesserungsvorschlag">Verbesserungsvorschlag</option>
+						</select>
+					</div>
+					<div class="form-group">
+    					<label for="kname" id="l_kname">Name:*</label>
+						<input name="kname" id="kname" class="form-control" value="" type="text" required>
+					</div>
+					<div class="form-group">
+						<label for="kemail" id="l_kemail">E-Mail-Adresse:*</label>
+						<input name="kemail" id="kemail" class="form-control" value="" type="email" required>
+					</div>
+					<div class="form-group">
+						<label for="ktext" id="l_ktext">Ihre Nachricht:*</label>
+						<textarea cols="40" rows="8" name="ktext" id="ktext" class="form-control" value="" required></textarea>
+					</div>
+      			</div>
+      			<div class="modal-footer">
+      				<nav class="navbar navbar-default navbar-bottom">
+						<div class="container-fluid">
+							<ul class="nav nav-pills nav-justified">
+								<li role="presentation"><a href="#" id="feedbackSend">absenden</a></li>
+							</ul>
+						</div>
+					</nav>
+     			</div>
+    		</div>
+  		</div>
+	</div> <!-- Modal Feedback -->
+    
+    <div class="modal fade" id="hilfeModal" tabindex="-1" role="dialog" aria-labelledby="hilfeModal">
+  		<div class="modal-dialog" role="document">
+    		<div class="modal-content">
+      			<div class="modal-header">
+       				<button type="button" class="close" data-dismiss="modal" aria-label="Schließen"><span aria-hidden="true">&times;</span></button>
+        			<h3 class="modal-title" id="hilfeModalTitel">Hilfe</h3>
+      			</div>
+      			<div class="modal-body">
+					<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+					  <div class="panel panel-default">
+						<div class="panel-heading" role="tab" id="Grundfunktionen">
+						  <h4 class="panel-title">
+							<a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseGrundfunktionen" aria-expanded="true" aria-controls="collapseGrundfunktionen">
+							 Grundfunktionen 
+							</a>
+						  </h4>
+						</div>
+						<div id="collapseGrundfunktionen" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="Grundfunktionen">
+						  <div class="panel-body">
+						  	<p>Auf der Karte werden die aktuellen GPS-Positionen der Straßenbahnen und Busse der SWU abgebildet. Jedes Fahrzeug ist mit 
+							  Linienlogo, Fahrtziel, Fahrplanabweichung im Format mm:ss und Wagennummer gekennzeichnet. Negative Zeiten bedeuten Verfrühung, 
+							  positive Verspätung. Verfrühungen und Verspätungen bis zu einer Minute erscheinen grün, alle übrigen rot.<br>
+    						  Fahrzeuge, die keine Echtzeitpositionen senden, werden nicht in der Grafik dargestellt. Das gilt insbesondere für die Fahrzeuge 
+    						  der DB ZugBus GmbH auf der Linie 7.</p>
+							  <p>Zudem zeigt die Karte das Verkehrsaufkommen des motorisierten Individualverkehrs auf Basis von Google Maps. Grüne 
+							  Streckenabschnitte bedeuten reibungslos fließenden Verkehr und orangefarbene mittleres Verkehrsaufkommen. Je röter der Farbton wird, 
+							  desto mehr staut sich der PKW-Verkehr.</p>
+							  <p>Über einen Klick auf das SWU-Logo rechts, gelangen Sie zur SWU Homepage. Dort finden Sie aktuelle Informationen über Baumaßnahmen, 
+							  Fahrplanauskünfte und weitere Hinweise zum Thema Nahverkehr in Ulm.</p>
+						  </div>
+						</div>
+					  </div>
+					  <div class="panel panel-default">
+						<div class="panel-heading" role="tab" id="Ortungsfunktion">
+						  <h4 class="panel-title">
+							<a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOrtungsfunktion" aria-expanded="false" aria-controls="collapseOrtungsfunktion">
+							  Ortungsfunktion
+							</a>
+						  </h4>
+						</div>
+						<div id="collapseOrtungsfunktion" class="panel-collapse collapse" role="tabpanel" aria-labelledby="Ortungsfunktion">
+						  <div class="panel-body">
+						  	<p>Auf Wunsch können Sie der Website Ihren aktuellen Standort mitteilen. Rufen Sie dazu im Menü oben links die Funktion Standort 
+						  	bestimmen auf. Die Karte wird dann auf Ihre Position zentriert und umliegende Haltestellen werden eingeblendet.</p>
+						  </div>
+						</div>
+					  </div>
+					  <div class="panel panel-default">
+						<div class="panel-heading" role="tab" id="Aktualisierungsintervall">
+						  <h4 class="panel-title">
+							<a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseAktualisierungsintervall" aria-expanded="false" aria-controls="collapseAktualisierungsintervall">
+							  Aktualisierungsintervall
+							</a>
+						  </h4>
+						</div>
+						<div id="collapseAktualisierungsintervall" class="panel-collapse collapse" role="tabpanel" aria-labelledby="Aktualisierungsintervall">
+						  <div class="panel-body">
+							<p>Das Aktualisierungsintervall der Karte können Sie in der Mitte der Menüleiste unten selbst festlegen.<br> 
+							Sie haben dabei die Wahl zwischen keine Aktualisierung (...), 5, 10, 20, 30 und 60 Sekunden.<br>
+							Im Abfahrtsmonitor beträgt das Aktualisierungsintervall mindestens 10 Sekunden.<br>
+							Diese Funktion ist in Safari leider nicht verfügbar.</p>
+						  </div>
+						</div>
+					  </div>
+					  <div class="panel panel-default">
+						<div class="panel-heading" role="tab" id="Stoerungsinformation">
+						  <h4 class="panel-title">
+							<a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseStoerungsinformation" aria-expanded="false" aria-controls="collapseStoerungsinformation">
+							  Störungsinformationen
+							</a>
+						  </h4>
+						</div>
+						<div id="collapseStoerungsinformation" class="panel-collapse collapse" role="tabpanel" aria-labelledby="Stoerungsinformation">
+						  <div class="panel-body">
+							<p>Liegt eine Störung im SWU-Netz vor, wird dies durch das rote Störungssymbol in der Menüleiste oben links angezeigt. Mit Klick auf 
+							das Symbol können Sie die Meldung lesen.<br>
+							Ist das Symbol grau, liegen aktuell keine Störungen vor.</p>
+						  </div>
+						</div>
+					  </div>
+					  <div class="panel panel-default">
+						<div class="panel-heading" role="tab" id="Folgefunktion">
+						  <h4 class="panel-title">
+							<a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseFolgefunktion" aria-expanded="false" aria-controls="collapseFolgefunktion">
+							  Fahrzeug folgen und Linienweg anzeigen
+							</a>
+						  </h4>
+						</div>
+						<div id="collapseFolgefunktion" class="panel-collapse collapse" role="tabpanel" aria-labelledby="Folgefunktion">
+						  <div class="panel-body">
+							<p>Wählen Sie mittels Touch bzw. Klick ein Fahrzeug auf der Karte aus, folgen Sie diesem Fahrzeug. Ist die Folgefunktion aktiv, 
+							färbt sich die Fahrtzielanzeige des Fahrzeugs dem Sie folgen blau.<br>
+							Zudem werden der Linienfahrweg des Fahrzeugs farblich hervorgehoben und alle auf dieser Route bedienten Haltestellen angezeigt.<br>
+							Möchten Sie dem Wagen nicht mehr folgen, bewegen Sie die Karte.<br>
+							Sollen auch der Linienfahrweg und die bedienten Haltestellen nicht mehr angezeigt werden, ziehen Sie den Fahrweg nach 
+							links oder rechts aus seiner Position.</p>
+						  </div>
+						</div>
+					  </div>
+					  <div class="panel panel-default">
+						<div class="panel-heading" role="tab" id="Haltestellenmonitor">
+						  <h4 class="panel-title">
+							<a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseHaltestellenmonitor" aria-expanded="false" aria-controls="collapseHaltestellenmonitor">
+							  Haltestellen und Echtzeitmonitor anzeigen
+							</a>
+						  </h4>
+						</div>
+						<div id="collapseHaltestellenmonitor" class="panel-collapse collapse" role="tabpanel" aria-labelledby="Haltestellenmonitor">
+						  <div class="panel-body">
+							<p>Solange ein Linienfahrweg ausgewählt ist, können Sie mit Klick auf eine Haltestelle die Echtzeitabfahrten der nächsten Minuten für 
+							alle Linien und Richtungen anzeigen lassen.</p>
+							<p>Alternativ kann der Abfahrtsmonitor auch jederzeit im Menü oben links aufgerufen werden.<br>
+							Geben Sie in das Suchfeld die Anfangsbuchstaben oder die Nummer der gewünschten Haltestelle ein; es werden dann entsprechende 
+							Vorschläge unterbreitet.<br>
+							Nach Auswahl einer Haltestelle klicken Sie bitte noch auf „anzeigen“.<br>
+							Die Ergebnisliste beinhaltet alle Abfahrten der gewählten Haltestelle mit Liniennummer, Fahrtziel, Abfahrtszeit in Minuten.<br>
+							Der Abfahrtsmonitor kann mittels "aktualisieren" manuell aktualisiert werden. Eine automatische Aktualisierung ist ebenfalls möglich,
+							wählen Sie hierzu das von Ihnen gewünschte Aktualisierungsintervall in der Menüleiste unten aus.<br>
+							Sie haben dabei die Wahl zwischen keine Aktualisierung (...), 10, 20, 30 und 60 Sekunden.</p>
+							<p>Möchten Sie zur Kartenansicht zurückkehren, schließen Sie den Abfahrtsmonitor.</p>
+						  </div>
+						</div>
+					  </div>
+					  <div class="panel panel-default">
+						<div class="panel-heading" role="tab" id="Feedback">
+						  <h4 class="panel-title">
+							<a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseFeedback" aria-expanded="false" aria-controls="collapseFeedback">
+							  Feedback
+							</a>
+						  </h4>
+						</div>
+						<div id="collapseFeedback" class="panel-collapse collapse" role="tabpanel" aria-labelledby="Feedback">
+						  <div class="panel-body">
+							<p>Anregungen für Verbesserungsvorschläge können Sie uns gern über die Feedbackfunktion zukommen lassen. 
+							Diese finden Sie im Menü oben links.</p>
+						  </div>
+						</div>
+					  </div>
+					</div>	
+      			</div>
+    		</div>
+  		</div>
+	</div> <!-- Modal Hilfe -->
+   
+    <div class="modal fade" id="stoerungsinfoModal" tabindex="-1" role="dialog" aria-labelledby="stoerungsinfoModal">
+  		<div class="modal-dialog" role="document">
+    		<div class="modal-content">
+      			<div class="modal-header">
+       				<button type="button" class="close" data-dismiss="modal" aria-label="Schließen"><span aria-hidden="true">&times;</span></button>
+        			<h3 class="modal-title" id="stoerungsinfoModalTitel">Aktuelle Störungsinformation</h3>
+      			</div>
+      			<div class="modal-body">
+					<p id="stoerungsBody">zur Zeit liegen keine Störungsinformationen vor</p>	
+      			</div>
+    		</div>
+  		</div>
+	</div> <!-- Modal Stoerungsinfo -->
+     
+    <!-- Bootstrap-JavaScript
+    ================================================== -->
+    <!-- Am Ende des Dokuments platziert, damit Seiten schneller laden -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="/js/dmonitor.js"></script>
+    <script type="text/javascript" src="/js/feedback.js"></script>
+    <script type="text/javascript" src="/js/getXML.js"></script>
+    <!-- IE10-Anzeigefenster-Hack für Fehler auf Surface und Desktop-Windows-8 -->
+	<script src="/js/ie10-viewport-bug-workaround.js"></script>
+  </body>
+</html>
