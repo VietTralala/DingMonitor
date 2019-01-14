@@ -24,17 +24,17 @@ def takeAndSavePhoto():
 
     print('click!_'+ datetime.now().strftime('%Y-%m-%d_%H:%M:%S')+'_ID'+str(watchingTrainID))
 
-# TODO: detect when session time out occurs to set DingSession to invalid
 def parse_xml(url, verbose=False):
-    r = requests.get(url)
+    response = requests.get(url)
 
     logging.debug('get url: '+ url)
     # tree = ElementTree.fromstring(content)
     try:
-        tree = etree.fromstring(r.content) #.decode('utf-8'))
+        tree = etree.fromstring(response.content) #.decode('utf-8'))
         logging.debug('successfully received XML')
     except etree.XMLSyntaxError as e:
-        print('Error %s occured while trying to parse xml: %s' % (e, r.content))
+        print('Error %s occured while trying to parse xml: %s' % (e, response.content))
+        raise
 
     # tree = etree.fromstring('')
 
@@ -123,13 +123,22 @@ def get_haltepunkt(name='Hauptbahnhof'):
     else:
         return None
 
+# TODO retry when failed to get sessionID
 def get_sessionID(name='Hauptbahnhof'):
     haltepunkt = get_haltepunkt(name)
-    r = requests.get('https://www.ding.eu/ding3/XSLT_DM_REQUEST?sessionID=0&type_dm=stopID&name_dm='+haltepunkt+'&useRealtime=1&excludedMeans=0&excludedMeans=6&excludedMeans=10&outputFormat=XML')
-    try:
-        tree = etree.fromstring(r.content)
-    except etree.XMLSyntaxError as e:
-        print('Error %s occured while trying to get session ID: %s' %(e, r.content))
+    receivedID = False
+
+
+    while not receivedID:
+        response = requests.get('https://www.ding.eu/ding3/XSLT_DM_REQUEST?sessionID=0&type_dm=stopID&name_dm='+haltepunkt+'&useRealtime=1&excludedMeans=0&excludedMeans=6&excludedMeans=10&outputFormat=XML')
+        try:
+            tree = etree.fromstring(response.content)
+            receivedID = True
+        except etree.XMLSyntaxError as e:
+            print('Error %s occured while trying to get session ID: %s' %(e, response.content))
+        if not receivedID:
+            print('retrying to get sessionID')
+
     return tree.get('sessionID')
 
 def generateURL(haltepunkt='Saarlandstraße', limit=10, outputformat='XML'):
@@ -145,9 +154,13 @@ def generateURL(haltepunkt='Saarlandstraße', limit=10, outputformat='XML'):
     return {'isValid':True, 'sessionID':sessID, 'url':url}
 
 def printETA(stop_name='Saarlandstraße', richtung='Science Park II'):
-    abfahrtMonitor = generateURL(stop_name)
-    abfahrtListe = parse_xml(abfahrtMonitor['url'])
 
+    try:
+        abfahrtMonitor = generateURL(stop_name)
+        abfahrtListe = parse_xml(abfahrtMonitor['url'])
+    except etree.XMLSyntaxError as e:
+        print(e)
+        raise
     df = pd.DataFrame(abfahrtListe, columns=['ID', 'linie', 'richtung', 'abfahrt', 'typ', 'route'])
     df = df.loc[df['richtung']==richtung]
     print(df)
@@ -159,9 +172,16 @@ def getETA(stop_name='Saarlandstraße', richtung='Science Park II'):
     # # else:
     #     abfahrtMonitor = DingSessions[stop_name]
 
-    abfahrtMonitor = generateURL(stop_name)
+    receivedETA = False
 
-    abfahrtListe = parse_xml(abfahrtMonitor['url'])
+    while not receivedETA:
+        try:
+            abfahrtMonitor = generateURL(stop_name)
+
+            abfahrtListe = parse_xml(abfahrtMonitor['url'])
+            receivedETA = True
+        except etree.XMLSyntaxError as e:
+            print('retry to receive ETA for %s in direction of %s' % (stop_name, richtung))
 
     if not abfahrtListe:
         return None # no estimated time of arrival
@@ -179,8 +199,18 @@ def getETA(stop_name='Saarlandstraße', richtung='Science Park II'):
     return df.iloc[0][['abfahrt','ID']].to_dict()
 
 
+def checkStationTrain(id, name):
+    stats = getETA(name)
+    if not stats:
+        print('%s: no ETA while checking for ID %s' % (name, id))
+    else:
+        if stats['ID'] != id:
+            print('%s: next train with different ID arriving at %s. (expected: %s, received %s)'
+                  % (name, id, stats['ID'], stats['abfahrt']))
+        else:
+            print('%s: train %s coming in %s' % (name, id, stats['abfahrt']))
 
-# TODO: some bug with key
+
 def trainIsComing():
     global watchingTrainID
     sld = getETA('Saarlandstraße')
@@ -198,7 +228,6 @@ def trainIsComing():
     watchingTrainID = None
     return False
 
-# TODO some bug with key
 def trainHasArrived():
     global watchingTrainID
     rmp = getETA('Römerplatz')
@@ -215,7 +244,7 @@ def trainHasArrived():
 
 
 def main():
-
+    global  watchingTrainID
     take_photo_every = 5
     check_departure_every = 5
     delay_saarlandstr_roemerplatz = 10
@@ -225,6 +254,8 @@ def main():
             time.sleep(delay_saarlandstr_roemerplatz)
             while not trainHasArrived():
                 takeAndSavePhoto()
+                checkStationTrain('Saarlandstraße', watchingTrainID)
+                checkStationTrain('Römerplatz', watchingTrainID)
                 time.sleep(take_photo_every)
         time.sleep(check_departure_every)
 
