@@ -214,7 +214,7 @@ def checkStationTrain(name, id):
     else:
         if stats['ID'] != id:
             print('%s: next train with different ID arriving at %s. (expected: %s, received %s)'
-                  % (name, id, stats['ID'], stats['abfahrt']))
+                  % (name,  stats['abfahrt'], id, stats['ID']))
         else:
             print('%s: train %s coming in %s' % (name, id, stats['abfahrt']))
 
