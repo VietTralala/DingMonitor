@@ -294,7 +294,7 @@ def main():
                     checkStationTrain('Römerplatz', id)
 
                     t_end = time.time()
-                    if t_end - t_start() < take_photo_every: #otherwise spend enough time in take foto!
+                    if t_end - t_start < take_photo_every: #otherwise spend enough time in take foto!
                         time.sleep(take_photo_every- (t_end-t_start))
 
             elif abfahrt:
