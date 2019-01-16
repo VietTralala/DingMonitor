@@ -6,6 +6,22 @@ import time
 from datetime import datetime
 import ipdb
 import sys
+import socket
+
+if socket.gethostname() =='raspi001':
+    from picamera import PiCamera
+
+def initCam():
+    if socket.gethostname() == 'raspi001':
+
+        cam = PiCamera()
+        cam.resolution = (640,480)
+
+        cam.start_preview()
+        return cam
+    else:
+        return None
+
 
 from IPython.core import ultratb
 sys.excepthook = ultratb.FormattedTB(mode='Verbose',
@@ -17,10 +33,17 @@ logging.basicConfig(filename='parse.log', filemode='w', level=logging.WARNING)
 logging.disabled = True
 
 # DingSessions = {} # dict of dicts: {stop_name:{'isValid':True, 'sessionID':sessID, 'url':url},...}
-watchingTrainID = None
 
-def takeAndSavePhoto():
+
+
+def takeAndSavePhoto(watchingTrainID,cam):
     # TODO implement raspi stuff
+    if cam: # not None
+        fname = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')+'_ID'+str(watchingTrainID)+'.jpg'
+        cam.capture('fotos/test/'+fname)
+
+
+
 
     print('click!_'+ datetime.now().strftime('%Y-%m-%d_%H:%M:%S')+'_ID'+str(watchingTrainID))
 
@@ -144,8 +167,9 @@ def get_sessionID(name='Hauptbahnhof'):
             receivedID = True
         except etree.XMLSyntaxError as e:
             print('Error %s occured while trying to get session ID: %s' %(e, response.content))
-        if not receivedID:
             print('retrying to get sessionID')
+            time.sleep(2)
+
 
     return tree.get('sessionID')
 
@@ -190,6 +214,7 @@ def getETA(stop_name='Saarlandstraße', richtung='Science Park II'):
             receivedETA = True
         except etree.XMLSyntaxError as e:
             print('retry to receive ETA for %s in direction of %s' % (stop_name, richtung))
+            time.sleep(2)
 
     if not abfahrtListe:
         return None # no estimated time of arrival
@@ -213,31 +238,29 @@ def checkStationTrain(name, id):
         print('%s: no ETA while checking for ID %s' % (name, id))
     else:
         if stats['ID'] != id:
-            print('%s: next train with different ID arriving at %s. (expected: %s, received %s)'
+            print('%s: next train with different ID arriving in %s min. (expected: %s, received %s)'
                   % (name,  stats['abfahrt'], id, stats['ID']))
         else:
             print('%s: train %s coming in %s' % (name, id, stats['abfahrt']))
 
 
 def trainIsComing():
-    global watchingTrainID
     sld = getETA('Saarlandstraße')
 
     if not sld:
         print("Saarlandstraße: no ETA while checking for Coming")
     else:
-        if  sld['abfahrt'] <= 1:
+        if  sld['abfahrt'] < 0: # can be 0, -1 and >=0
             watchingTrainID = sld['ID']
             print('train is coming, watching train ID '+ str(watchingTrainID))
-            return True
+            return True, sld['abfahrt'], sld['ID']
         else:
             print('Saarlandstraße in %s min' % (sld['abfahrt'],))
+            False, sld['abfahrt'], sld['ID']
 
-    watchingTrainID = None
-    return False
+    return False, None, None
 
-def trainHasArrived():
-    global watchingTrainID
+def trainHasArrived(watchingTrainID):
     rmp = getETA('Römerplatz')
 
     if not rmp:
@@ -252,20 +275,36 @@ def trainHasArrived():
 
 
 def main():
-    global  watchingTrainID
     take_photo_every = 5
-    check_departure_every = 5
+    check_departure_every = 30
     delay_saarlandstr_roemerplatz = 10
 
+    camera = initCam()
+
     while True:
-        if trainIsComing():
-            time.sleep(delay_saarlandstr_roemerplatz)
-            while not trainHasArrived():
-                takeAndSavePhoto()
-                checkStationTrain('Saarlandstraße', watchingTrainID)
-                checkStationTrain('Römerplatz', watchingTrainID)
-                time.sleep(take_photo_every)
-        time.sleep(check_departure_every)
+        try:
+            isComing, abfahrt, id = trainIsComing()
+            if isComing:
+                time.sleep(delay_saarlandstr_roemerplatz)
+                while not trainHasArrived(id):
+                    t_start = time.time()
+                    takeAndSavePhoto(id,camera)
+
+                    checkStationTrain('Saarlandstraße', id)
+                    checkStationTrain('Römerplatz', id)
+
+                    t_end = time.time()
+                    if t_end - t_start() < take_photo_every: #otherwise spend enough time in take foto!
+                        time.sleep(take_photo_every- (t_end-t_start))
+
+            elif abfahrt:
+                time.sleep(60*(abfahrt/2))
+            else:#abfahrt is none
+                time.sleep(check_departure_every)
+        except requests.exceptions.RequestException as e:
+            logging.error('%s' % e)
+            print('%s' % e)
+            time.sleep(60)
 
 
     ipdb.set_trace()
