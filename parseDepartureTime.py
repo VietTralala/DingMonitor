@@ -39,8 +39,8 @@ logging.disabled = True
 def takeAndSavePhoto(watchingTrainID,cam):
     # TODO implement raspi stuff
     if cam: # not None
-        fname = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')+'_ID'+str(watchingTrainID)+'.jpg'
-        cam.capture('fotos/test/'+fname)
+        fname = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'_ID'+str(watchingTrainID)+'.jpg'
+        cam.capture('./fotos/test/'+fname)
 
 
 
