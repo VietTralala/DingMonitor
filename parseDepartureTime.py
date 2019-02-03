@@ -8,6 +8,8 @@ import ipdb
 import sys
 import socket
 
+from getSunrise import getSunTimes
+
 if socket.gethostname() =='raspi001':
     from picamera import PiCamera
 
@@ -31,8 +33,6 @@ from lxml import etree
 import logging
 logging.basicConfig(filename='parse.log', filemode='w', level=logging.WARNING)
 logging.disabled = True
-
-# DingSessions = {} # dict of dicts: {stop_name:{'isValid':True, 'sessionID':sessID, 'url':url},...}
 
 
 
@@ -234,14 +234,22 @@ def getETA(stop_name='Saarlandstraße', richtung='Science Park II'):
 
 def checkStationTrain(name, id):
     stats = getETA(name)
+    msg = None
     if not stats:
-        print('%s: no ETA while checking for ID %s' % (name, id))
+        msg =  '%s: no ETA while checking for ID %s' % (name, id)
+        ret_status = -1
+        print(msg)
     else:
         if stats['ID'] != id:
-            print('%s: next train with different ID arriving in %s min. (expected: %s, received %s)'
-                  % (name,  stats['abfahrt'], id, stats['ID']))
+            msg = '%s: next train with different ID arriving in %s min. (expected: %s, received %s)' \
+                   % (name,  stats['abfahrt'], id, stats['ID'])
+            ret_status = 0
+            print(msg)
         else:
-            print('%s: train %s coming in %s' % (name, id, stats['abfahrt']))
+            msg =  '%s: train %s coming in %s' % (name, id, stats['abfahrt'])
+            ret_status = +1
+            print(msg)
+    return ret_status, msg
 
 
 def trainIsComing():
@@ -256,7 +264,7 @@ def trainIsComing():
             return True, sld['abfahrt'], sld['ID']
         else:
             print('Saarlandstraße in %s min' % (sld['abfahrt'],))
-            False, sld['abfahrt'], sld['ID']
+            return False, sld['abfahrt'], sld['ID']
 
     return False, None, None
 
@@ -269,6 +277,9 @@ def trainHasArrived(watchingTrainID):
         if rmp['ID'] != watchingTrainID:
             print('train has arrived: old ID %s -> %s' % (str(watchingTrainID), rmp['ID']))
             return True
+        else:
+            pass
+            # msg = 'train (ID: %s) has not arrived yet' % str(watchingTrainID)
 
     return False
 
@@ -282,6 +293,8 @@ def main():
     camera = initCam()
 
     while True:
+
+
         try:
             isComing, abfahrt, id = trainIsComing()
             if isComing:
@@ -299,6 +312,8 @@ def main():
 
             elif abfahrt:
                 time.sleep(60*(abfahrt/2))
+            elif abfahrt == 0:
+                time.sleep(1)
             else:#abfahrt is none
                 time.sleep(check_departure_every)
         except requests.exceptions.RequestException as e:

@@ -4,3 +4,9 @@
 # debug
 *.log
 *.xml
+
+# api key
+api-key.txt
+
+#python stuff
+__pycache__
